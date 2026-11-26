@@ -1,0 +1,116 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+.out/
+.next/standalone/
+.next/server/
+.next/static/
+.next/cache/
+
+# Database
+prisma/*.db
+prisma/*.bak
+*.sqlite
+*.sqlite3
+
+# Environment files (keep .env.example if needed)
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+
+# Logs
+*.log
+dev.log
+server.log
+
+# Lock files (bun - package-lock.json is preferred for reproducibility)
+bun.lock
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
+
+# Next.js auto-generated type declarations
+next-env.d.ts
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*.idea
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Coverage reports
+coverage/
+*.check
+*.lcov
+
+# Temporary files
+*.tmp
+tmp.sql
+*.temp
+
+# Debug files
+*.gdb
+*.dSYM/
+
+# Optional npm cache
+.npm
+.node-gyp/
+
+# Optional vulcan
+.vultr/
+
+# Tool results (temporary output from code execution tools)
+tool-results/
+
+# Test files that shouldn't be committed
+login-test.html
+test-results/
+
+# Upload artifacts
+uploads/
+uploads/**/*
+!.gitkeep
+
+# Documentation files (untrack all markdown documentation except README.md)
+AGENTS.md
+BACKEND_*.md
+DATABASE_*.md
+ERD.md
+README_FIX*.md
+download/*.md
+
+# Utility scripts for local use
+check_db.ts
+
+# Server pid files
+*.pid
+
+# PM2 and other process managers
+.pm2/
+*.pid
+ ecosystem.config.js
+
+# Sentry debug files
+*.sentry-debug*
+
+# Vercel
+.vercel/

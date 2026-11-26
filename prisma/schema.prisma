@@ -1,0 +1,208 @@
+// This is your Prisma schema file for Sistem Absensi Karyawan Yayasan Al-Maghfirah
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id            String    @id @default(cuid())
+  nip           String    @unique
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          String    @default("karyawan") // "karyawan" | "admin"
+  jabatan       String
+  telepon       String?
+  jenisKelamin  String?   // "Laki-laki" | "Perempuan"
+  tempatLahir   String?
+  tanggalLahir  DateTime?
+  agama         String?   @default("Islam")
+  alamat        String?
+  avatarColor   String?
+  sisaCuti      Int       @default(12)
+  isActive      Boolean   @default(true)
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relasi
+  attendances            Attendance[]
+  leaveRequests          LeaveRequest[]          @relation("EmployeeLeaveRequests")
+  approvedLeaves         LeaveRequest[]          @relation("AdminApprovedLeaves")
+  attendanceCorrections  AttendanceCorrection[]  @relation("AdminCorrections")
+  workSchedules          WorkSchedule[]
+  quizSubmissions        QuizSubmission[]
+
+  @@map("employees")
+}
+
+model GpsLocation {
+  id        String    @id @default(cuid())
+  nama      String    @unique
+  latitude  Float
+  longitude Float
+  radius    Int       @default(100) // dalam meter
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  attendances Attendance[]
+
+  @@map("gps_locations")
+}
+
+model WorkSchedule {
+  id                 String    @id @default(cuid())
+  employeeId         String?
+  employee           Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  namaJadwal         String    @unique
+  jamMasuk           String    // "08:00"
+  jamPulang          String    // "17:00"
+  toleransiTerlambat Int       @default(15) // menit
+  hariKerja          String    @default("Senin - Jumat")
+  isDefault          Boolean   @default(false)
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("work_schedules")
+}
+
+model Attendance {
+  id              String       @id @default(cuid())
+  employeeId      String
+  employee        Employee     @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  gpsLocationId   String?
+  gpsLocation     GpsLocation? @relation(fields: [gpsLocationId], references: [id], onDelete: SetNull)
+
+  tanggal         DateTime     // 2026-11-23 00:00:00
+  jamMasuk        DateTime?
+  jamPulang       DateTime?
+  jamMasukLembur  DateTime?
+  jamPulangLembur DateTime?
+
+  latMasuk        Float?
+  longMasuk       Float?
+  latPulang       Float?
+  longPulang      Float?
+
+  fotoMasukUrl    String?
+  fotoPulangUrl   String?
+
+  status          String       // "hadir", "terlambat", "izin", "sakit", "cuti", "tidak-hadir", "lembur", "libur"
+  keterangan      String?
+  dikoreksi       Boolean      @default(false)
+  deletedAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  corrections     AttendanceCorrection[]
+  quizSubmissions QuizSubmission[]
+
+  @@unique([employeeId, tanggal])
+  @@index([tanggal, status])
+  @@index([employeeId, tanggal])
+  @@map("attendances")
+}
+
+model AttendanceCorrection {
+  id             String     @id @default(cuid())
+  attendanceId   String
+  attendance     Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  adminId        String
+  admin          Employee   @relation("AdminCorrections", fields: [adminId], references: [id], onDelete: Restrict)
+
+  jamMasukLama   DateTime?
+  jamMasukBaru   DateTime?
+  jamPulangLama  DateTime?
+  jamPulangBaru  DateTime?
+  statusLama     String?
+  statusBaru     String?
+  alasanKoreksi  String
+  createdAt      DateTime   @default(now())
+
+  @@map("attendance_corrections")
+}
+
+model LeaveRequest {
+  id             String    @id @default(cuid())
+  employeeId     String
+  employee       Employee  @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id], onDelete: Restrict)
+  approvedById   String?
+  approvedBy     Employee? @relation("AdminApprovedLeaves", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  jenis          String    // "izin", "sakit", "cuti"
+  tanggalMulai   DateTime
+  tanggalSelesai DateTime
+  durasiHari     Int
+  alasan         String
+  lampiranUrl    String?
+  status         String    @default("pending") // "pending", "approved", "rejected"
+  catatanAdmin   String?
+  approvedAt     DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([employeeId, status])
+  @@index([status])
+  @@map("leave_requests")
+}
+
+model Holiday {
+  id             String    @id @default(cuid())
+  nama           String    @unique
+  tanggalMulai   DateTime
+  tanggalSelesai DateTime
+  jenis          String    // "rutin", "nasional", "khusus"
+  keterangan     String?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("holidays")
+}
+
+model Quiz {
+  id          String    @id @default(cuid())
+  pertanyaan  String    @unique
+  opsiA       String
+  opsiB       String
+  opsiC       String
+  opsiD       String
+  kunci       String    // "A" | "B" | "C" | "D"
+  pembahasan  String
+  status      String    @default("aktif") // "aktif", "nonaktif"
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  submissions QuizSubmission[]
+
+  @@map("quizzes")
+}
+
+model QuizSubmission {
+  id           String      @id @default(cuid())
+  quizId       String
+  quiz         Quiz        @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  employeeId   String
+  employee     Employee    @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  attendanceId String?
+  attendance   Attendance? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+
+  jawaban      String      // "A" | "B" | "C" | "D"
+  isBenar      Boolean
+  tanggal      DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+
+  @@index([employeeId, tanggal])
+  @@map("quiz_submissions")
+}
